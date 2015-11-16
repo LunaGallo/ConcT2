@@ -8,28 +8,33 @@
 #define NPART 4
 #define EXEC_NUM 10
 
+//As estruturas a seguir foram criadas para representar uma imagem PPM seja ela P5 ou P6
+//PPMGrayPixel representa um pixel em P5 , ou seja, em escala de cinza de 0 a 255.
 typedef struct {
      unsigned char value;
 } PPMGrayPixel;
 
+//PPMPixel representa um pixel em P6 , ou seja, em RGB com 3 canais variando de 0 a 255.
 typedef struct {
      unsigned char red,green,blue;
 } PPMPixel;
 
+//PPMImage representa uma imagem P5 ou P6. Inclui a possibilidade de armazenar bordas superior e inferior de pixeis redundantes(especifico para a aplicação).
 typedef struct {
-     int x, y;
-     PPMPixel *data;
-     PPMGrayPixel *grayData;
+     int x, y;//dimensões da imagem.
+     PPMPixel *data;//vetor de pixeis, caso seja uma imagem colorida. NULL caso contrario
+     PPMGrayPixel *grayData;//vetor de pixeis, caso seja uma imagem cinza. NULL caso contrario
 
-     PPMPixel *ColTopBorder;
-     PPMGrayPixel *GrayTopBorder;
-     PPMPixel *ColBotBorder;
-     PPMGrayPixel *GrayBotBorder;
+     PPMPixel *ColTopBorder;//vetor de pixeis da borda, caso seja uma imagem colorida com uma borda superior. NULL caso contrario
+     PPMGrayPixel *GrayTopBorder;//vetor de pixeis da borda, caso seja uma imagem cinza com uma borda superior. NULL caso contrario
+     PPMPixel *ColBotBorder;//vetor de pixeis da borda, caso seja uma imagem colorida com uma borda inferior. NULL caso contrario
+     PPMGrayPixel *GrayBotBorder;//vetor de pixeis da borda, caso seja uma imagem cinza com uma borda inferior. NULL caso contrario
 } PPMImage;
 
+//-----------------------------
+//Código com funções para ler e escrever imagens PPM em arquivo
 #define CREATOR "RPFELGUEIRAS"
 #define RGB_COMPONENT_COLOR 255
-
 static PPMImage *readPPM(const char *filename){
          char buff[16];
          PPMImage *img;
@@ -157,8 +162,14 @@ void writePPM(const char *filename, PPMImage *img){
     fwrite(img->data, 3 * img->x, img->y, fp);
     fclose(fp);
 }
+//---------------------------------
 
-
+/*
+A seguinte função aplica o filtro de Smooth na imagem colorida "imagemFonte" 
+e retorna seu resultado na imagem colorida "imagemResult".
+Isso vale para qualquer tamanho de imagem e ele leva em consideração bordas 
+extras superior e inferior caso a imagem seja parte de uma imagem maior.
+*/
 void ColoredSmooth(PPMImage *imagemFonte, PPMImage *imagemResult){
     int largura, altura;
     int i, j, k, l, contador, R, G, B;
@@ -207,6 +218,9 @@ void ColoredSmooth(PPMImage *imagemFonte, PPMImage *imagemResult){
 
 }
 
+/*
+A seguinte função escreve no arquivo "res.ppm" a imagem colorida "imagem" dada.
+*/
 void writeColoredPPMImage(PPMImage *imagem, FILE *arquivo) {
 	int i, j, largura, altura;
 
@@ -243,6 +257,12 @@ void writeColoredPPMImage(PPMImage *imagem, FILE *arquivo) {
 */
 }
 
+/*
+A seguinte função aplica o filtro de Smooth na imagem cinza "imagemFonte" 
+e retorna seu resultado na imagem cinza "imagemResult".
+Isso vale para qualquer tamanho de imagem e ele leva em consideração bordas 
+extras superior e inferior caso a imagem seja parte de uma imagem maior.
+*/
 void GrayscaleSmooth(PPMImage *imagemFonte, PPMImage *imagemResult) {
 	int largura, altura;
 	int i, j, k, l, contador, V;
@@ -281,6 +301,9 @@ void GrayscaleSmooth(PPMImage *imagemFonte, PPMImage *imagemResult) {
 	}
 }
 
+/*
+A seguinte função escreve no arquivo "res.ppm" a imagem cinza "imagem" dada.
+*/
 void writeGrayscalePPMImage(PPMImage *imagem, FILE *arquivo) {
 	int i, j, largura, altura;
 
@@ -314,6 +337,10 @@ void writeGrayscalePPMImage(PPMImage *imagem, FILE *arquivo) {
 */
 }
 
+/*
+A seguinte função retorna uma imagem alocada na memória, criada com base numa 
+imagem dada "imagemFonte" mas sem copiar seu conteudo, somente dimensões e bordas.
+*/
 PPMImage* CreateBasedPPMImage(PPMImage *imagemFonte){
 	PPMImage *imagemResult;
     if(imagemFonte == NULL){
@@ -362,6 +389,10 @@ PPMImage* CreateBasedPPMImage(PPMImage *imagemFonte){
 	return imagemResult;
 }
 
+/*
+A seguinte função libera o espaço da memória previamente alocado para 
+a imagem cujo endereço está no ponteiro "imageReference".
+*/
 void DestroyPPMImage(PPMImage **imageReference){
     if((*imageReference) == NULL){
 		return;
@@ -377,6 +408,11 @@ void DestroyPPMImage(PPMImage **imageReference){
 	(*imageReference) = NULL;
 }
 
+/*
+A seguinte função retorna um array de imagens, geradas como segmentos horizontais 
+da imagem dada "imagemFonte". O numero de imagens geradas depende da constante NPART.
+Esta função também gera as bordas de redundancia superiores e inferiores necessarias.
+*/
 PPMImage** CropPPMImage(PPMImage *imagemFonte) {
     int i, j, globalIndex, localIndex;
     PPMImage **imageVector = (PPMImage**)malloc((NPART) * sizeof(PPMImage*));
@@ -480,6 +516,10 @@ PPMImage** CropPPMImage(PPMImage *imagemFonte) {
     return imageVector;
 }
 
+/*
+A seguinte função aglutina as imagens de um array de 
+imagens "imageVector" em uma unica imagem "mergedImage". 
+*/
 void MergePPMImages(PPMImage *mergedImage, PPMImage **imageVector) {
     int i, j, globalIndex;
 
@@ -498,33 +538,38 @@ void MergePPMImages(PPMImage *mergedImage, PPMImage **imageVector) {
     }
 }
 
+
 int main(){
     FILE* arquivo = NULL;
     int i, j;
 
+	//Imagens e vetores de imagens
     PPMImage *imagemFonte;
     PPMImage *imagemFinal;
 	PPMImage **imagemResults;
 	PPMImage **imagemVector;
 
+	//Variáveis de contagem de tempo
 	struct timespec startingTimespec, endingTimespec;
 	long long startingTime, totalTime;
 	double  timeSum;
 	
+	//Loop de repetição de execussão, para extrair a média dos tempos de execussão
 	for(j=0;j<EXEC_NUM;j++){
 		
-		//Starts counting time
+		//Começa a contar o tempo
 		clock_gettime(CLOCK_REALTIME, &startingTimespec);
 		startingTime = startingTimespec.tv_sec*1000000000LL + startingTimespec.tv_nsec;
 
+		//Le o arquivo e divide a imagem
 		imagemFonte = readPPM("img.ppm");
 		imagemVector = CropPPMImage(imagemFonte);
 		imagemResults = (PPMImage**)malloc(NPART * sizeof(PPMImage*));
 		
-
+		//Percorre o vetor de imagens
 		for (i=0; i<NPART; i++) {
 			imagemResults[i] = CreateBasedPPMImage(imagemVector[i]);
-
+			//Aplica o Smooth na dada sub-imagem
 			if(imagemResults[i]->data != NULL){ //Colored Image
 				ColoredSmooth(imagemVector[i], imagemResults[i]);
 			}
@@ -533,17 +578,17 @@ int main(){
 			}
 		}
 
+		//Cria a imagem final e aglutina as partes nela
 		imagemFinal = CreateBasedPPMImage(imagemFonte);
 		MergePPMImages(imagemFinal, imagemResults);
 		
-		{
-			//Stops counting time
-			clock_gettime(CLOCK_REALTIME, &endingTimespec);
-			totalTime = endingTimespec.tv_sec*1000000000LL + endingTimespec.tv_nsec - startingTime;
-			double miliseconds = totalTime/1000000;
-			timeSum += (miliseconds/1000);
-		}
+		//Para de contar o tempo
+		clock_gettime(CLOCK_REALTIME, &endingTimespec);
+		totalTime = endingTimespec.tv_sec*1000000000LL + endingTimespec.tv_nsec - startingTime;
+		double miliseconds = totalTime/1000000;
+		timeSum += (miliseconds/1000);
 
+		//Escreve a imagem final no arquivo
 		if(imagemFinal->data != NULL){ //Colored Image
 			writeColoredPPMImage(imagemFinal, arquivo);
 		}
@@ -551,6 +596,7 @@ int main(){
 			writeGrayscalePPMImage(imagemFinal, arquivo);
 		}
 
+		//Libera a memória de todas as imagens usadas
 		for (i=0; i<NPART; i++) {
 			DestroyPPMImage(&(imagemVector[i]));
 			DestroyPPMImage(&(imagemResults[i]));
@@ -561,6 +607,7 @@ int main(){
 		DestroyPPMImage(&imagemFinal);
 
 	}
+	//Imprime o tempo médio de execução
 	printf("Avarage Execution Time = %f\n\n", timeSum/EXEC_NUM);
 
     return 0;
