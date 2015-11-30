@@ -1,3 +1,8 @@
+extern "C"
+{
+#include "ConcT3CUDA.h"
+}
+
 
 __global__ void SingleSmooth_Kernel(unsigned char *imagemResult, unsigned char *imagemFonte, int largura, int altura){
 	int i, j, k, l, contador, V;
