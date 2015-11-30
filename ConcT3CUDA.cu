@@ -37,7 +37,7 @@ void CudaSmooth(unsigned char *CpuInput, unsigned char *CpuOutput, int largura, 
 	grid_size.x = (largura + block_size.x - 1)/block_size.x;
 	grid_size.y = (altura + block_size.y - 1)/block_size.y;
 
-	kernel_smooth<<<grid_size, block_size>>>(GpuInput, GpuOutput, largura, altura);
+	SingleSmooth_Kernel<<<grid_size, block_size>>>(GpuInput, GpuOutput, largura, altura);
 
 	cudaMemcpy(CpuOutput, GpuOutput, largura*altura, cudaMemcpyDeviceToHost);
 
