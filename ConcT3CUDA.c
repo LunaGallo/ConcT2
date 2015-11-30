@@ -366,12 +366,12 @@ int main(){
 		}
 
 		//Libera a memória de todas as imagens usadas
-		for (i=0; i<NPART; i++) {
-			DestroyPPMImage(&(imagemVector[i]));
-			DestroyPPMImage(&(imagemResults[i]));
+		for (i=0; i<channelNum; i++) {
+			free(ImgInput[i]);
+			free(ImgOutput[i]);
 		}
-		DestroyPPMImage(imagemVector);
-		DestroyPPMImage(imagemResults);
+		free(ImgInput);
+		free(ImgOutput);
 		DestroyPPMImage(&imagemFonte);
 		DestroyPPMImage(&imagemFinal);
 
