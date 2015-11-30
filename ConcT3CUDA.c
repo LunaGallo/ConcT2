@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include "ConcT3CUDA.h"
 
 #define BLOCO 5
 #define NPART 4
