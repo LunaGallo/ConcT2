@@ -7,6 +7,8 @@
 #define NPART 4
 #define EXEC_NUM 10
 
+void CudaSmooth(unsigned char *CpuInput, unsigned char *CpuOutput, int largura, int altura);
+
 //As estruturas a seguir foram criadas para representar uma imagem PPM seja ela P5 ou P6
 //PPMGrayPixel representa um pixel em P5 , ou seja, em escala de cinza de 0 a 255.
 typedef struct {
@@ -195,28 +197,7 @@ void writeColoredPPMImage(PPMImage *imagem, FILE *arquivo) {
 /*
 
 */
-void CudaSmooth(unsigned char *CpuInput, unsigned char *CpuOutput, int largura, int altura) {
-	unsigned char *GpuInput;
-	unsigned char *GpuOutput;
-	
-	cudaMalloc(&GpuInput, largura*altura);
-	cudaMalloc(&GpuOutput, largura*altura);
 
-	cudaMemcpy(GpuInput, CpuInput, largura*altura, cudaMemcpyHostToDevice);
-
-	dim3 block_size(64, 64);
-
-	dim3 grid_size;
-	grid_size.x = (largura + block_size.x - 1)/block_size.x;
-	grid_size.y = (altura + block_size.y - 1)/block_size.y;
-
-	kernel_smooth<<<grid_size, block_size>>>(GpuInput, GpuOutput, largura, altura);
-
-	cudaMemcpy(CpuOutput, GpuOutput, largura*altura, cudaMemcpyDeviceToHost);
-
-	cudaFree(GpuInput);
-	cudaFree(GpuOutput);
-}
 
 /*
 A seguinte função escreve no arquivo "res.ppm" a imagem cinza "imagem" dada.
